@@ -18,35 +18,53 @@
     </div>
     <div class="wrapper__login-button" @click="handleLogin">登陆</div>
     <div class="wrapper__login-link" @click="handleRegisterClick">立即注册</div>
+    <Toast v-if="data.showToast" :message="data.toastMessage"/>
   </div>
 </template>
 
 <script>
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { post } from '../../utils/request'
 import { reactive } from 'vue'
-
-axios.defaults.headers.post['Content-Type'] = 'application/json'
+import Toast from '../../components/Toast'
 
 export default {
   // eslint-disable-next-line vue/multi-word-component-names
   name: 'Login',
+  components: { Toast },
   setup () {
     const data = reactive({
       username: '',
-      password: ''
+      password: '',
+      showToast: false,
+      toastMessage: ''
     })
     const router = useRouter()
-    const handleLogin = () => {
-      axios.post('https://www.fastmock.site/mock/ae8e9031947a302fed5f92425995aa19/jd/api/user/login', {
-        username: data.username,
-        password: data.password
-      }).then(() => {
-        localStorage.isLogin = true
-        router.push({ name: 'Home' })
-      }).catch(() => {
-        alert('登陆失败')
-      })
+
+    const showToast = (message) => {
+      data.showToast = true
+      data.toastMessage = message
+      setTimeout(() => {
+        data.showToast = false
+        data.toastMessage = ''
+      }, 2000)
+    }
+
+    const handleLogin = async () => {
+      try {
+        const result = await post('111/api/user/login', {
+          username: data.username,
+          password: data.password
+        })
+        if (result?.errno === 0) {
+          localStorage.isLogin = true
+          router.push({ name: 'Home' })
+        } else {
+          showToast('登陆失败')
+        }
+      } catch (e) {
+        showToast('请求失败')
+      }
     }
     const handleRegisterClick = () => {
       router.push({ name: 'Register' })
